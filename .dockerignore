@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+**/dist
+**/data
+**/*.db
+**/*.db-*
+.vscode
+.idea
+coverage
+.vite

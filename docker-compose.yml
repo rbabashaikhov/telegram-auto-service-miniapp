@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      ALLOW_DEMO_MODE: ${ALLOW_DEMO_MODE:-true}
+      DATABASE_PATH: /data/autoservice.db
+      TZ: ${TZ:-Europe/Moscow}
+      DATA_MODE: ${DATA_MODE:-local}
+      PARTS_PROVIDER: ${PARTS_PROVIDER:-local}
+      BUSINESS_NAME: "Норд Авто"
+      APP_TITLE: "Норд Авто"
+      APP_DESCRIPTION: "Клиентский портал автосервиса"
+      CURRENCY: RUB
+      BRAND_ACCENT: "#2f6f8f"
+      SLOT_STEP_MINUTES: "30"
+      FEATURE_REPEAT_BOOKING: "true"
+      FEATURE_DEMO_TOUR: "true"
+      FEATURE_DEMO_ADMIN_PREVIEW: "true"
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+    volumes:
+      - sqlite_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  sqlite_data:
