@@ -27,7 +27,7 @@ export const autoDemoTour: DemoTourDefinition = {
       'диагностика и смета с запчастями',
       'локальный PartsProvider без TecDoc',
     ],
-    adminLabel: 'Посмотреть админку',
+    adminLabel: 'Кабинет администратора',
     continueLabel: 'Продолжить как клиент',
   },
   steps: [
@@ -42,7 +42,7 @@ export const autoDemoTour: DemoTourDefinition = {
       id: 'problem',
       target: 'problem-cta',
       route: '/',
-      title: 'Что-то сломалось',
+      title: 'Что случилось с автомобилем?',
       description: 'Если клиент не знает услугу, он описывает симптом вместо выбора из прайса.',
     },
     {

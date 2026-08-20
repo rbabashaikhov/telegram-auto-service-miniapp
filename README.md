@@ -28,6 +28,12 @@ flowchart TD
   APP --> PARTS[PartsProvider]
   PARTS --> LOCALPARTS[LocalPartsProvider]
   PARTS --> EXT[ExternalPartsProvider stub]
+  APP --> VIN[VinDecoderProvider]
+  VIN --> VIND[DemoVinDecoderProvider]
+  VIN --> VINE[ExternalVinDecoderProvider stub]
+  APP --> MAINT[MaintenanceScheduleProvider]
+  MAINT --> MAINTD[DemoMaintenanceScheduleProvider]
+  MAINT --> MAINTE[ExternalMaintenanceScheduleProvider stub]
 ```
 
 Режим задаётся на composition layer (`backend/src/container.ts`), не ветвлениями `if (crmMode)` в application code:
@@ -36,6 +42,10 @@ flowchart TD
 - `DATA_MODE=crm` — CRM provider stub, контролируемый `501 CRM_NOT_CONFIGURED`.
 - `PARTS_PROVIDER=local` — локальный каталог запчастей.
 - `PARTS_PROVIDER=external` — stub `501 PARTS_NOT_CONFIGURED`.
+- `VIN_PROVIDER=demo` — демо-каталог VIN, не OEM-база.
+- `VIN_PROVIDER=external` — stub `501 VIN_NOT_CONFIGURED`.
+- `MAINTENANCE_PROVIDER=demo` — демо-регламент ТО.
+- `MAINTENANCE_PROVIDER=external` — stub `501 MAINTENANCE_NOT_CONFIGURED`.
 
 Provider boundaries:
 
@@ -50,12 +60,14 @@ Provider boundaries:
 - EstimateProvider
 - PartsProvider
 - HistoryProvider
+- VinDecoderProvider
+- MaintenanceScheduleProvider
 
 ## Domain model
 
 Клиентский поток строится вокруг автомобиля, а не каталога услуг.
 
-Ключевые сущности: Customer, Vehicle, Service, Specialist, Resource, Appointment, ServiceRequest, Inspection, Estimate, EstimateItem, Part, VehiclePartFitment.
+Ключевые сущности: Customer, Vehicle, Service, Specialist, Resource, Appointment, ServiceRequest, Inspection, InspectionItem, Estimate, EstimateItem, Part, VehiclePartFitment.
 
 Статусы записи: `booked → arrived → diagnosing → waiting_approval → in_progress → completed` (+ `cancelled`, `no_show`).
 
@@ -63,11 +75,13 @@ Provider boundaries:
 
 ## Client UX
 
-Главный экран показывает выбранный автомобиль, пробег, последнее обслуживание и CTA:
+Главный экран показывает выбранный автомобиль, пробег, напоминание ТО, ближайшее ТО по демо-регламенту и CTA:
 
-- Записаться
-- Что-то сломалось
-- История обслуживания
+- Записаться в сервис
+- Что случилось с автомобилем?
+- Записаться на ТО
+
+После добавления автомобиля клиент попадает на экран следующих шагов, а не в пустой список. VIN → идентификация → пробег → регламент / ближайшее ТО. Смета позволяет согласовать выбранные позиции.
 
 Клиент не выбирает подъёмник или пост. Backend атомарно назначает специалиста и resource.
 
@@ -136,6 +150,8 @@ docker compose up --build
 | `TELEGRAM_BOT_TOKEN` | empty | HMAC validation initData |
 | `DATA_MODE` | `local` | `local` \| `crm` |
 | `PARTS_PROVIDER` | `local` | `local` \| `external` |
+| `VIN_PROVIDER` | `demo` | `demo` \| `external` (`501 VIN_NOT_CONFIGURED`) |
+| `MAINTENANCE_PROVIDER` | `demo` | `demo` \| `external` (`501 MAINTENANCE_NOT_CONFIGURED`) |
 
 Secrets не коммитить. Файл `.env` в `.gitignore`.
 
@@ -169,13 +185,17 @@ Sales Demo Mode — guided tour по живому UI. Тур не создаёт
 
 Контракт: [`docs/PARTS.md`](docs/PARTS.md). Local catalog для сценария диагностика → работы + запчасти → смета. TecDoc / supplier API не подключены.
 
+## VIN и регламент ТО
+
+Демо-каталог VIN и демо-регламент ТО подключаются через `VinDecoderProvider` / `MaintenanceScheduleProvider`. Живой OEM / CRM заказчика не подключён: `VIN_PROVIDER=external` и `MAINTENANCE_PROVIDER=external` отвечают `501`. Демо VIN и ограничения — в [`DEMO.md`](DEMO.md).
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-Backend покрывает availability (specialist/resource/blocks/eligibility), booking, double-booking, service request conversion, estimate totals/approval/rejection/fitment, status transitions, Telegram auth, admin fail-closed, demo-admin read-only.
+Backend покрывает availability (specialist/resource/blocks/eligibility), booking, double-booking, service request conversion, inspection items, estimate totals/partial approval/rejection/fitment, status transitions, demo VIN/maintenance providers, Telegram auth, admin fail-closed, demo-admin read-only.
 
 ## Deployment notes
 
@@ -185,7 +205,7 @@ Backend покрывает availability (specialist/resource/blocks/eligibility)
 
 - нет реального CRM adapter;
 - нет TecDoc;
-- нет VIN decoding;
+- VIN/OEM maintenance — только demo provider, external не подключён;
 - нет оплаты;
 - нет склада;
 - нет бухгалтерии;

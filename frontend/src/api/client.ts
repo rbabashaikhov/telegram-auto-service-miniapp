@@ -6,6 +6,7 @@ import type {
   DayAvailability,
   Estimate,
   HistoryVisit,
+  MaintenanceSchedule,
   Part,
   Portal,
   RepeatContext,
@@ -15,6 +16,8 @@ import type {
   SlotOption,
   Specialist,
   Vehicle,
+  VehicleMaintenance,
+  VinIdentification,
   WorkingHours,
 } from '../types';
 
@@ -77,6 +80,14 @@ export const api = {
     request<{ data: Vehicle }>(`/api/vehicles/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   activateVehicle: (id: number) =>
     request<{ data: Vehicle }>(`/api/vehicles/${id}/activate`, { method: 'POST' }),
+  getVehicle: (id: number) => request<{ data: Vehicle }>(`/api/vehicles/${id}`),
+  getVehicleMaintenance: (id: number) =>
+    request<{ data: VehicleMaintenance }>(`/api/vehicles/${id}/maintenance`),
+  decodeVin: (body: { vin: string; mileage?: number }) =>
+    request<{ data: { identification: VinIdentification; schedule: MaintenanceSchedule | null } }>(
+      '/api/vin/decode',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
   getServices: (category?: string) =>
     request<{ data: Service[] }>(category ? `/api/services?category=${category}` : '/api/services'),
   getSpecialists: (serviceId?: number) =>
@@ -111,10 +122,10 @@ export const api = {
   getRepeatContext: (id: number) => request<{ data: RepeatContext }>(`/api/appointments/${id}/repeat-context`),
   cancelAppointment: (id: number) =>
     request<{ data: Appointment }>(`/api/appointments/${id}/cancel`, { method: 'PATCH' }),
-  decideEstimate: (appointmentId: number, decision: 'approved' | 'rejected') =>
+  decideEstimate: (appointmentId: number, decision: 'approved' | 'rejected', itemIds?: number[]) =>
     request<{ data: Estimate }>(`/api/appointments/${appointmentId}/estimate/decision`, {
       method: 'POST',
-      body: JSON.stringify({ decision }),
+      body: JSON.stringify({ decision, itemIds }),
     }),
   createServiceRequest: (body: {
     vehicleId: number;

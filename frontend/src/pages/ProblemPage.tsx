@@ -5,12 +5,14 @@ import { TopBar } from '../components/TopBar';
 import { useBooking } from '../context/BookingContext';
 
 const CATEGORIES = [
-  { id: 'noise', label: 'Посторонний звук' },
-  { id: 'dashboard', label: 'Ошибка на панели' },
-  { id: 'brakes', label: 'Проблемы с тормозами' },
+  { id: 'maintenance', label: 'ТО' },
+  { id: 'oil', label: 'Масло' },
+  { id: 'brakes', label: 'Тормоза' },
   { id: 'suspension', label: 'Подвеска' },
   { id: 'engine', label: 'Двигатель' },
   { id: 'electrical', label: 'Электрика' },
+  { id: 'noise', label: 'Посторонний звук' },
+  { id: 'dashboard', label: 'Ошибка на панели' },
   { id: 'vibration', label: 'Вибрация' },
   { id: 'other', label: 'Другое' },
 ];
@@ -18,8 +20,8 @@ const CATEGORIES = [
 export function ProblemPage() {
   const navigate = useNavigate();
   const booking = useBooking();
-  const [category, setCategory] = useState('noise');
-  const [description, setDescription] = useState('При повороте руля слышен стук спереди.');
+  const [category, setCategory] = useState('maintenance');
+  const [description, setDescription] = useState('');
   const [desiredDate, setDesiredDate] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -44,10 +46,10 @@ export function ProblemPage() {
 
   return (
     <div className="page">
-      <TopBar title="Что случилось?" backTo="/" />
+      <TopBar title="Что случилось с автомобилем?" backTo="/" />
       {error && <div className="card error-box">{error}</div>}
       <form className="stack" data-demo-tour="problem-form" onSubmit={(event) => void onSubmit(event)}>
-        <p className="lead">Что случилось с автомобилем?</p>
+        <p className="lead">Выберите категорию и опишите проблему — сервис предложит диагностику.</p>
         <div className="chip-row">
           {CATEGORIES.map((item) => (
             <button
@@ -61,12 +63,13 @@ export function ProblemPage() {
           ))}
         </div>
         <label>
-          Опишите подробнее
+          Опишите проблему
           <textarea
             required
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="Например: стук спереди при повороте, горит лампочка масла"
           />
         </label>
         <label>

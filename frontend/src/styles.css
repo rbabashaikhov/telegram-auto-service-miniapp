@@ -182,8 +182,10 @@ h2 {
 
 .topbar {
   display: grid;
-  grid-template-columns: 36px 1fr 36px;
+  grid-template-columns: minmax(auto, max-content) 1fr minmax(auto, max-content);
   align-items: center;
+  gap: 8px;
+  min-height: 44px;
 }
 
 .topbar h1 {
@@ -192,14 +194,16 @@ h2 {
   margin: 0;
 }
 
-.icon-btn {
+.topbar-back {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 10px;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.topbar-spacer {
   width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
 }
 
 .stack {
@@ -325,6 +329,54 @@ textarea {
   font-size: 18px;
 }
 
+.estimate-row.is-toggle {
+  align-items: center;
+}
+
+.estimate-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspection-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.inspection-item:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.severity {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.severity-critical {
+  color: var(--danger);
+}
+
+.severity-recommendation {
+  color: var(--accent-strong);
+}
+
+.severity-ok {
+  color: var(--success);
+}
+
+.maintenance-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+}
+
 .error-box {
   background: var(--danger-dim);
   color: var(--danger);
@@ -360,6 +412,20 @@ textarea {
 .demo-chrome-link {
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.demo-chrome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent-strong);
+  white-space: nowrap;
 }
 
 .demo-tour-layer {

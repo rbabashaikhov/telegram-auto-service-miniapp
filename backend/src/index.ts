@@ -18,6 +18,7 @@ import { configRouter } from './routes/config.js';
 import { demoAdminRouter } from './routes/demoAdmin.js';
 import { meRouter } from './routes/me.js';
 import { requestsRouter } from './routes/requests.js';
+import { vinRouter } from './routes/vin.js';
 import { vehiclesRouter } from './routes/vehicles.js';
 
 migrate();
@@ -57,6 +58,8 @@ app.get('/api/health', (_req, res) => {
       ok: true,
       dataMode: config.dataMode,
       partsProvider: config.partsProvider,
+      vinProvider: config.vinProvider,
+      maintenanceProvider: config.maintenanceProvider,
       demoMode: config.allowDemoMode,
       adminProtected: config.isProduction || Boolean(config.admin.token),
     });
@@ -71,6 +74,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/config', configRouter);
 app.use('/api', catalogRouter);
 app.use('/api/availability', availabilityRouter);
+app.use('/api/vin', vinRouter);
 app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/service-requests', requestsRouter);
@@ -120,6 +124,8 @@ if (!config.isTest) {
       database: process.env.DATABASE_PATH || 'local default',
       dataMode: config.dataMode,
       partsProvider: config.partsProvider,
+      vinProvider: config.vinProvider,
+      maintenanceProvider: config.maintenanceProvider,
       demoMode: config.allowDemoMode,
       adminProtected: config.isProduction || Boolean(config.admin.token),
       business: publicAppConfig(),

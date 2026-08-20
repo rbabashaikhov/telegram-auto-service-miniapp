@@ -1,10 +1,20 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { providers as defaultProviders } from '../container.js';
+import {
+  maintenanceSchedule as defaultMaintenance,
+  providers as defaultProviders,
+  vinDecoder as defaultVinDecoder,
+} from '../container.js';
 import { authMiddleware } from '../middleware/auth.js';
-import type { Providers } from '../providers/types.js';
+import type { MaintenanceScheduleProvider, Providers, VinDecoderProvider } from '../providers/types.js';
+import { getVehicleMaintenance } from '../services/maintenance.js';
 import { sendError, requireAuthUser } from './helpers.js';
-import { serializeVehicle } from './serialize.js';
+import {
+  serializeHistory,
+  serializeMaintenanceSchedule,
+  serializeVehicle,
+  serializeVinIdentification,
+} from './serialize.js';
 
 const vehicleBody = z.object({
   make: z.string().min(1),
@@ -17,7 +27,11 @@ const vehicleBody = z.object({
   mileage: z.coerce.number().int().min(0),
 });
 
-export function createVehiclesRouter(data: Providers = defaultProviders): Router {
+export function createVehiclesRouter(
+  data: Providers = defaultProviders,
+  decoder: VinDecoderProvider = defaultVinDecoder,
+  schedule: MaintenanceScheduleProvider = defaultMaintenance,
+): Router {
   const router = Router();
   router.use(authMiddleware);
 
@@ -47,6 +61,49 @@ export function createVehiclesRouter(data: Providers = defaultProviders): Router
         isActive: existing.length === 0,
       });
       res.status(201).json({ data: serializeVehicle(vehicle) });
+    } catch (error) {
+      sendError(res, error);
+    }
+  });
+
+  router.get('/:id/maintenance', (req, res) => {
+    try {
+      const user = requireAuthUser(req);
+      const customer = data.customers.upsert(user);
+      const vehicle = data.vehicles.getById(Number(req.params.id));
+      if (!vehicle || vehicle.customer_id !== customer.id) {
+        res.status(404).json({ error: 'Vehicle not found', code: 'VEHICLE_NOT_FOUND' });
+        return;
+      }
+      const view = getVehicleMaintenance(data, decoder, schedule, vehicle);
+      res.json({
+        data: {
+          identification: serializeVinIdentification(view.identification),
+          schedule: serializeMaintenanceSchedule(view.schedule),
+          completedWork: view.completedWork.map(serializeHistory),
+          inspectionRecommendations: view.inspectionRecommendations.map((item) => ({
+            appointmentId: item.appointmentId,
+            name: item.name,
+            severity: item.severity,
+            note: item.note,
+          })),
+        },
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  });
+
+  router.get('/:id', (req, res) => {
+    try {
+      const user = requireAuthUser(req);
+      const customer = data.customers.upsert(user);
+      const vehicle = data.vehicles.getById(Number(req.params.id));
+      if (!vehicle || vehicle.customer_id !== customer.id) {
+        res.status(404).json({ error: 'Vehicle not found', code: 'VEHICLE_NOT_FOUND' });
+        return;
+      }
+      res.json({ data: serializeVehicle(vehicle) });
     } catch (error) {
       sendError(res, error);
     }

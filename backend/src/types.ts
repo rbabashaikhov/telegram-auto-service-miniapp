@@ -18,6 +18,7 @@ export type ServiceRequestStatus =
 
 export type EstimateStatus = 'draft' | 'awaiting_approval' | 'approved' | 'rejected';
 export type EstimateItemType = 'labor' | 'part';
+export type InspectionSeverity = 'critical' | 'recommendation' | 'ok';
 export type ResourceType = 'lift' | 'diagnostic_bay' | 'tire_bay' | 'alignment_stand' | 'general_bay';
 export type DataMode = 'local' | 'crm';
 export type PartsProviderName = 'local' | 'external';
@@ -198,6 +199,14 @@ export interface ServiceRequestWithDetails extends ServiceRequest {
   vehicle_engine: string | null;
 }
 
+export interface InspectionItem {
+  id: number;
+  inspection_id: number;
+  name: string;
+  severity: InspectionSeverity;
+  note: string | null;
+}
+
 export interface Inspection {
   id: number;
   appointment_id: number;
@@ -205,6 +214,7 @@ export interface Inspection {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  items: InspectionItem[];
 }
 
 export interface Estimate {
@@ -226,6 +236,7 @@ export interface EstimateItem {
   unit_price: number;
   total_price: number;
   part_id: number | null;
+  approved: number;
 }
 
 export interface EstimateWithDetails extends Estimate {
@@ -272,6 +283,47 @@ export interface HistoryVisit {
   appointment: AppointmentWithDetails;
   estimateTotal: number | null;
   laborTitles: string[];
+}
+
+export interface VinIdentification {
+  vin: string;
+  make: string;
+  model: string;
+  generation: string | null;
+  year: number | null;
+  engine: string | null;
+  source: 'demo';
+  fallback: boolean;
+  message: string | null;
+}
+
+export interface MaintenanceScheduleItem {
+  id: string;
+  name: string;
+  intervalKm: number;
+  lastDueMileage: number;
+  nextDueMileage: number;
+  remainingKm: number;
+  due: boolean;
+}
+
+export interface MaintenanceMilestone {
+  name: string;
+  dueMileage: number;
+  remainingKm: number;
+}
+
+export interface MaintenanceRecommendation {
+  name: string;
+  reason: string;
+}
+
+export interface MaintenanceSchedule {
+  source: 'demo';
+  disclaimer: string;
+  items: MaintenanceScheduleItem[];
+  nearestMilestone: MaintenanceMilestone | null;
+  recommendedOperations: MaintenanceRecommendation[];
 }
 
 export const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [

@@ -1,7 +1,12 @@
 import { Router } from 'express';
-import { providers as defaultProviders } from '../container.js';
+import {
+  maintenanceSchedule as defaultMaintenance,
+  providers as defaultProviders,
+  vinDecoder as defaultVinDecoder,
+} from '../container.js';
 import { authMiddleware } from '../middleware/auth.js';
-import type { Providers } from '../providers/types.js';
+import type { MaintenanceScheduleProvider, Providers, VinDecoderProvider } from '../providers/types.js';
+import { getVehicleMaintenance } from '../services/maintenance.js';
 import { portalNow } from '../services/booking.js';
 import { sendError, requireAuthUser } from './helpers.js';
 import {
@@ -9,12 +14,17 @@ import {
   serializeCustomer,
   serializeEstimate,
   serializeHistory,
+  serializeMaintenanceSchedule,
   serializeReminder,
   serializeRequest,
   serializeVehicle,
 } from './serialize.js';
 
-export function createMeRouter(data: Providers = defaultProviders): Router {
+export function createMeRouter(
+  data: Providers = defaultProviders,
+  decoder: VinDecoderProvider = defaultVinDecoder,
+  schedule: MaintenanceScheduleProvider = defaultMaintenance,
+): Router {
   const router = Router();
   router.use(authMiddleware);
 
@@ -35,6 +45,11 @@ export function createMeRouter(data: Providers = defaultProviders): Router {
       const reminder = activeVehicle
         ? serializeReminder(data.history.getReminder(activeVehicle.id), activeVehicle.mileage)
         : null;
+      const maintenance = activeVehicle
+        ? serializeMaintenanceSchedule(
+            getVehicleMaintenance(data, decoder, schedule, activeVehicle).schedule,
+          )
+        : null;
       const openEstimate = nextAppointment
         ? data.estimates.getByAppointment(nextAppointment.id)
         : data.bookings
@@ -53,6 +68,7 @@ export function createMeRouter(data: Providers = defaultProviders): Router {
           nextAppointment: nextAppointment ? serializeAppointment(nextAppointment) : null,
           lastVisit: lastVisit ? serializeAppointment(lastVisit) : null,
           reminder,
+          maintenance,
           openEstimate: openEstimate ? serializeEstimate(openEstimate) : null,
           pendingRequest: pendingRequest ? serializeRequest(pendingRequest) : null,
         },

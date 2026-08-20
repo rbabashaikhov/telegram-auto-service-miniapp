@@ -120,7 +120,10 @@ export function createAppointmentsRouter(data: Providers = defaultProviders): Ro
     }
   });
 
-  const decisionBody = z.object({ decision: z.enum(['approved', 'rejected']) });
+  const decisionBody = z.object({
+    decision: z.enum(['approved', 'rejected']),
+    itemIds: z.array(z.number().int().positive()).optional(),
+  });
 
   router.post('/:id/estimate/decision', (req, res) => {
     try {
@@ -143,6 +146,7 @@ export function createAppointmentsRouter(data: Providers = defaultProviders): Ro
       const updated = decideEstimate(data, {
         estimateId: estimate.id,
         decision: parsed.data.decision,
+        itemIds: parsed.data.itemIds,
         user,
       });
       res.json({ data: serializeEstimate(updated) });

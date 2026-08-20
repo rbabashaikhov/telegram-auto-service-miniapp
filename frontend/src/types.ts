@@ -118,6 +118,17 @@ export interface EstimateItem {
   unitPrice: number;
   totalPrice: number;
   partId: number | null;
+  approved: boolean;
+}
+
+export type InspectionSeverity = 'critical' | 'recommendation' | 'ok';
+
+export interface InspectionItem {
+  id: number;
+  inspectionId: number;
+  name: string;
+  severity: InspectionSeverity;
+  note: string | null;
 }
 
 export interface Estimate {
@@ -128,7 +139,7 @@ export interface Estimate {
   createdAt: string;
   approvedAt: string | null;
   items: EstimateItem[];
-  inspection: { id: number; summary: string; notes: string | null } | null;
+  inspection: { id: number; summary: string; notes: string | null; items: InspectionItem[] } | null;
 }
 
 export interface ServiceRequest {
@@ -167,6 +178,52 @@ export interface Reminder {
   message: string;
 }
 
+export interface MaintenanceMilestone {
+  name: string;
+  dueMileage: number;
+  remainingKm: number;
+}
+
+export interface MaintenanceSchedule {
+  source: 'demo';
+  disclaimer: string;
+  items: Array<{
+    id: string;
+    name: string;
+    intervalKm: number;
+    lastDueMileage: number;
+    nextDueMileage: number;
+    remainingKm: number;
+    due: boolean;
+  }>;
+  nearestMilestone: MaintenanceMilestone | null;
+  recommendedOperations: Array<{ name: string; reason: string }>;
+}
+
+export interface VinIdentification {
+  vin: string;
+  make: string;
+  model: string;
+  generation: string | null;
+  year: number | null;
+  engine: string | null;
+  source: 'demo';
+  fallback: boolean;
+  message: string | null;
+}
+
+export interface VehicleMaintenance {
+  identification: VinIdentification;
+  schedule: MaintenanceSchedule;
+  completedWork: HistoryVisit[];
+  inspectionRecommendations: Array<{
+    appointmentId: number;
+    name: string;
+    severity: InspectionSeverity;
+    note: string | null;
+  }>;
+}
+
 export interface Portal {
   customer: { id: number; name: string; phone: string | null };
   vehicles: Vehicle[];
@@ -174,6 +231,7 @@ export interface Portal {
   nextAppointment: Appointment | null;
   lastVisit: Appointment | null;
   reminder: Reminder | null;
+  maintenance: MaintenanceSchedule | null;
   openEstimate: Estimate | null;
   pendingRequest: ServiceRequest | null;
 }

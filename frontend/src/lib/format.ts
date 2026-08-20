@@ -59,3 +59,9 @@ export function weekdayShort(weekday: number): string {
 export function formatStatus(status: AppointmentStatus, fallback?: string): string {
   return STATUS_LABELS[status] ?? fallback ?? status;
 }
+
+export const SEVERITY_LABELS: Record<'critical' | 'recommendation' | 'ok', string> = {
+  critical: 'Критично',
+  recommendation: 'Рекомендация',
+  ok: 'Без замечаний',
+};

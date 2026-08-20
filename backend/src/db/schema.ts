@@ -207,6 +207,15 @@ export function applySchema(database: Database.Database): void {
       FOREIGN KEY (appointment_id) REFERENCES appointments(id)
     );
 
+    CREATE TABLE IF NOT EXISTS inspection_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      inspection_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      severity TEXT NOT NULL CHECK (severity IN ('critical', 'recommendation', 'ok')),
+      note TEXT,
+      FOREIGN KEY (inspection_id) REFERENCES inspections(id)
+    );
+
     CREATE TABLE IF NOT EXISTS estimates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       appointment_id INTEGER NOT NULL,
@@ -228,6 +237,7 @@ export function applySchema(database: Database.Database): void {
       unit_price INTEGER NOT NULL,
       total_price INTEGER NOT NULL,
       part_id INTEGER,
+      approved INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (estimate_id) REFERENCES estimates(id),
       FOREIGN KEY (part_id) REFERENCES parts(id)
     );
@@ -260,12 +270,30 @@ export function applySchema(database: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_appointments_resource_date ON appointments (resource_id, appointment_date, status);
     CREATE INDEX IF NOT EXISTS idx_appointments_vehicle ON appointments (vehicle_id, status);
     CREATE INDEX IF NOT EXISTS idx_requests_customer ON service_requests (customer_id, status);
+    CREATE INDEX IF NOT EXISTS idx_inspection_items ON inspection_items (inspection_id);
     CREATE INDEX IF NOT EXISTS idx_parts_category ON parts (category, active);
     CREATE INDEX IF NOT EXISTS idx_fitments_variant ON vehicle_part_fitments (variant_id, part_id);
     CREATE INDEX IF NOT EXISTS idx_blocked_date ON blocked_slots (blocked_date);
   `);
 }
 
+function tableColumns(database: Database.Database, table: string): string[] {
+  return (database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map(
+    (row) => row.name,
+  );
+}
+
+function ensureColumn(
+  database: Database.Database,
+  table: string,
+  column: string,
+  definition: string,
+): void {
+  if (tableColumns(database, table).includes(column)) return;
+  database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
 export function migrate(database: Database.Database = db): void {
   applySchema(database);
+  ensureColumn(database, 'estimate_items', 'approved', 'INTEGER NOT NULL DEFAULT 0');
 }

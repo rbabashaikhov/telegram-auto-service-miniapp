@@ -6,7 +6,9 @@ import type {
   EstimateWithDetails,
   HistoryVisit,
   Inspection,
+  InspectionItem,
   MaintenanceReminder,
+  MaintenanceSchedule,
   Part,
   Resource,
   Service,
@@ -14,6 +16,7 @@ import type {
   Specialist,
   Vehicle,
   VehicleVariant,
+  VinIdentification,
   WorkingHours,
 } from '../types.js';
 
@@ -179,6 +182,16 @@ export function serializeRequest(row: ServiceRequestWithDetails) {
   };
 }
 
+export function serializeInspectionItem(row: InspectionItem) {
+  return {
+    id: row.id,
+    inspectionId: row.inspection_id,
+    name: row.name,
+    severity: row.severity,
+    note: row.note,
+  };
+}
+
 export function serializeInspection(row: Inspection) {
   return {
     id: row.id,
@@ -186,6 +199,7 @@ export function serializeInspection(row: Inspection) {
     summary: row.summary,
     notes: row.notes,
     createdAt: row.created_at,
+    items: (row.items ?? []).map(serializeInspectionItem),
   };
 }
 
@@ -205,6 +219,7 @@ export function serializeEstimate(row: EstimateWithDetails) {
       unitPrice: item.unit_price,
       totalPrice: item.total_price,
       partId: item.part_id,
+      approved: Boolean(item.approved),
     })),
     inspection: row.inspection ? serializeInspection(row.inspection) : null,
   };
@@ -243,6 +258,38 @@ export function serializeReminder(row: MaintenanceReminder | undefined, mileage:
       remaining > 0
         ? `Следующее ТО примерно через ${remaining.toLocaleString('ru-RU')} км`
         : `ТО просрочено на ${Math.abs(remaining).toLocaleString('ru-RU')} км`,
+  };
+}
+
+export function serializeVinIdentification(row: VinIdentification) {
+  return {
+    vin: row.vin,
+    make: row.make,
+    model: row.model,
+    generation: row.generation,
+    year: row.year,
+    engine: row.engine,
+    source: row.source,
+    fallback: row.fallback,
+    message: row.message,
+  };
+}
+
+export function serializeMaintenanceSchedule(row: MaintenanceSchedule) {
+  return {
+    source: row.source,
+    disclaimer: row.disclaimer,
+    items: row.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      intervalKm: item.intervalKm,
+      lastDueMileage: item.lastDueMileage,
+      nextDueMileage: item.nextDueMileage,
+      remainingKm: item.remainingKm,
+      due: item.due,
+    })),
+    nearestMilestone: row.nearestMilestone,
+    recommendedOperations: row.recommendedOperations,
   };
 }
 

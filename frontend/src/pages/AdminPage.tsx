@@ -113,7 +113,7 @@ export function AdminPage({ readOnly = false }: { readOnly?: boolean }) {
   if (needsToken && !readOnly) {
     return (
       <div className="admin-layout">
-        <h1>Админка</h1>
+        <h1>Кабинет администратора</h1>
         <p>Нужен ADMIN_TOKEN</p>
         <input value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} />
         <button
@@ -126,6 +126,9 @@ export function AdminPage({ readOnly = false }: { readOnly?: boolean }) {
         >
           Войти
         </button>
+        <Link className="btn btn-secondary" to="/">
+          Открыть клиентское приложение
+        </Link>
       </div>
     );
   }
@@ -151,7 +154,9 @@ export function AdminPage({ readOnly = false }: { readOnly?: boolean }) {
           <p className="eyebrow">{readOnly ? 'Demo admin · только чтение' : 'Write console'}</p>
           <h1>Норд Авто</h1>
         </div>
-        <Link to="/">К порталу</Link>
+        <Link className="btn btn-secondary" to="/">
+          Открыть клиентское приложение
+        </Link>
       </header>
       {error && <div className="card error-box">{error}</div>}
       <nav className="admin-tabs">

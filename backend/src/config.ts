@@ -17,6 +17,8 @@ const allowDemoMode =
 
 export type DataModeName = 'local' | 'crm';
 export type PartsProviderName = 'local' | 'external';
+export type VinProviderName = 'demo' | 'external';
+export type MaintenanceProviderName = 'demo' | 'external';
 
 function dataModeName(value: string | undefined): DataModeName {
   if (value === 'crm' || value === 'local') return value;
@@ -26,6 +28,16 @@ function dataModeName(value: string | undefined): DataModeName {
 function partsProviderName(value: string | undefined): PartsProviderName {
   if (value === 'external' || value === 'local') return value;
   return 'local';
+}
+
+function vinProviderName(value: string | undefined): VinProviderName {
+  if (value === 'external' || value === 'demo') return value;
+  return 'demo';
+}
+
+function maintenanceProviderName(value: string | undefined): MaintenanceProviderName {
+  if (value === 'external' || value === 'demo') return value;
+  return 'demo';
 }
 
 export const config = {
@@ -41,6 +53,8 @@ export const config = {
   timezone: process.env.TZ || 'Europe/Moscow',
   dataMode: dataModeName(process.env.DATA_MODE),
   partsProvider: partsProviderName(process.env.PARTS_PROVIDER),
+  vinProvider: vinProviderName(process.env.VIN_PROVIDER),
+  maintenanceProvider: maintenanceProviderName(process.env.MAINTENANCE_PROVIDER),
   business: {
     name: process.env.BUSINESS_NAME || 'Норд Авто',
     vertical: process.env.BUSINESS_VERTICAL || 'autoservice',

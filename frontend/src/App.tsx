@@ -13,6 +13,7 @@ import { ServicesPage } from './pages/ServicesPage';
 import { SpecialistPage } from './pages/SpecialistPage';
 import { TimePage } from './pages/TimePage';
 import { VehicleFormPage } from './pages/VehicleFormPage';
+import { VehicleReadyPage } from './pages/VehicleReadyPage';
 import { VehiclesPage } from './pages/VehiclesPage';
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/vehicles" element={<VehiclesPage />} />
         <Route path="/vehicles/new" element={<VehicleFormPage />} />
+        <Route path="/vehicles/:id/next" element={<VehicleReadyPage />} />
         <Route path="/vehicles/:id" element={<VehicleFormPage />} />
         <Route path="/problem" element={<ProblemPage />} />
         <Route path="/problem/success" element={<ProblemSuccessPage />} />

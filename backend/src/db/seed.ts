@@ -412,6 +412,19 @@ export function seed(database: Database.Database, now = new Date('2026-08-15T09:
     summary: 'Зафиксированы ошибки по системе зажигания. Рекомендуется проверка катушек.',
     notes: 'Клиент отмечает потерю тяги.',
   });
+  const diagnosingInspection = p.estimates.getInspection(diagnosing.id)!;
+  p.estimates.addInspectionItem({
+    inspectionId: diagnosingInspection.id,
+    name: 'Катушки зажигания',
+    severity: 'recommendation',
+    note: 'Рекомендуется проверка',
+  });
+  p.estimates.addInspectionItem({
+    inspectionId: diagnosingInspection.id,
+    name: 'Система зажигания',
+    severity: 'ok',
+    note: 'Ошибки считаны, критичных отказов нет',
+  });
 
   const awaiting = p.bookings.insert({
     customerId: ivanPetrov.id,
@@ -431,6 +444,25 @@ export function seed(database: Database.Database, now = new Date('2026-08-15T09:
     appointmentId: awaiting.id,
     summary: 'Износ передних тормозных колодок.',
     notes: 'Диски в допуске, замена не требуется.',
+  });
+  const awaitingInspection = p.estimates.getInspection(awaiting.id)!;
+  p.estimates.addInspectionItem({
+    inspectionId: awaitingInspection.id,
+    name: 'Передние тормозные колодки',
+    severity: 'critical',
+    note: 'Требуют замены',
+  });
+  p.estimates.addInspectionItem({
+    inspectionId: awaitingInspection.id,
+    name: 'Воздушный фильтр',
+    severity: 'recommendation',
+    note: 'Рекомендуется заменить',
+  });
+  p.estimates.addInspectionItem({
+    inspectionId: awaitingInspection.id,
+    name: 'Подвеска',
+    severity: 'ok',
+    note: 'Без замечаний',
   });
   const estimate = p.estimates.create(awaiting.id);
   p.estimates.addItem({
@@ -481,6 +513,7 @@ export function resetAndSeed(database: Database.Database): void {
     'vehicle_part_fitments',
     'estimate_items',
     'estimates',
+    'inspection_items',
     'inspections',
     'service_requests',
     'appointments',

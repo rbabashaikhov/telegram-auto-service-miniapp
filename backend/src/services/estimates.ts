@@ -148,7 +148,13 @@ export function submitEstimate(providers: Providers, estimateId: number) {
 
 export function decideEstimate(
   providers: Providers,
-  params: { estimateId: number; decision: 'approved' | 'rejected'; user?: TelegramUser; admin?: boolean },
+  params: {
+    estimateId: number;
+    decision: 'approved' | 'rejected';
+    user?: TelegramUser;
+    admin?: boolean;
+    itemIds?: number[];
+  },
 ) {
   return providers.transaction(() => {
     const estimate = providers.estimates.getById(params.estimateId);
@@ -164,9 +170,24 @@ export function decideEstimate(
         throw new AppError('Estimate not found', 404, 'ESTIMATE_NOT_FOUND');
       }
     }
-    const approvedAt = params.decision === 'approved' ? new Date().toISOString() : null;
-    const updated = providers.estimates.updateStatus(estimate.id, params.decision, approvedAt);
+
+    let updated = estimate;
     if (params.decision === 'approved') {
+      const allowed = new Set(estimate.items.map((item) => item.id));
+      const itemIds = params.itemIds ?? estimate.items.map((item) => item.id);
+      if (itemIds.length === 0) {
+        throw new AppError('Select at least one estimate item', 400, 'ESTIMATE_EMPTY_SELECTION');
+      }
+      if (itemIds.some((id) => !allowed.has(id))) {
+        throw new AppError('Estimate item not found', 400, 'ESTIMATE_ITEM_NOT_FOUND');
+      }
+      updated = providers.estimates.setItemsApproved(estimate.id, itemIds);
+    }
+
+    const approvedAt = params.decision === 'approved' ? new Date().toISOString() : null;
+    updated = providers.estimates.updateStatus(estimate.id, params.decision, approvedAt);
+    if (params.decision === 'approved') {
+      updated = providers.estimates.getById(estimate.id)!;
       if (appointment.status === 'waiting_approval' || appointment.status === 'diagnosing') {
         providers.bookings.updateStatus(appointment.id, 'in_progress');
       }

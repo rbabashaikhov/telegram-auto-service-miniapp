@@ -34,17 +34,19 @@ export function HistoryPage() {
 
   return (
     <div className="page">
-      <TopBar title="История" backTo="/" />
+      <TopBar title="История обслуживания" backTo="/" />
       <div data-demo-tour="visit-history">
         {visits.map((visit) => (
           <article key={visit.id} className="card">
-            <p className="eyebrow">{formatDateFull(visit.date)}</p>
+            <p className="eyebrow">Дата</p>
+            <p>{formatDateFull(visit.date)}</p>
+            <p className="eyebrow">Работы</p>
             <h2>{visit.service.name}</h2>
             {visit.laborTitles.filter((title) => title !== visit.service.name).map((title) => (
               <p key={title} className="muted">{title}</p>
             ))}
             <p className="muted">Пробег: {formatMileage(visit.vehicle.mileage)}</p>
-            <p className="price">{formatPrice(visit.estimateTotal ?? visit.price)}</p>
+            <p className="price">Стоимость: {formatPrice(visit.estimateTotal ?? visit.price)}</p>
             <button type="button" className="btn btn-secondary btn-block" onClick={() => void onRepeat(visit)}>
               Повторить обслуживание
             </button>

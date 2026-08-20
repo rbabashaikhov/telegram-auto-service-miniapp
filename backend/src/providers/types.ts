@@ -12,7 +12,11 @@ import type {
   EstimateWithDetails,
   HistoryVisit,
   Inspection,
+  InspectionItem,
+  InspectionSeverity,
   MaintenanceReminder,
+  MaintenanceSchedule,
+  VinIdentification,
   Part,
   Service,
   ServiceRequest,
@@ -236,6 +240,13 @@ export interface ServiceRequestProvider {
 export interface EstimateProvider {
   getInspection(appointmentId: number): Inspection | undefined;
   upsertInspection(params: { appointmentId: number; summary: string; notes?: string | null }): Inspection;
+  addInspectionItem(params: {
+    inspectionId: number;
+    name: string;
+    severity: InspectionSeverity;
+    note?: string | null;
+  }): InspectionItem;
+  listInspectionItems(inspectionId: number): InspectionItem[];
   getByAppointment(appointmentId: number): EstimateWithDetails | undefined;
   getById(id: number): EstimateWithDetails | undefined;
   listAdmin(status?: EstimateStatus): EstimateWithDetails[];
@@ -249,8 +260,23 @@ export interface EstimateProvider {
     partId?: number | null;
   }): EstimateItem;
   removeItem(itemId: number): boolean;
+  setItemsApproved(estimateId: number, itemIds: number[]): EstimateWithDetails;
   recalcTotal(estimateId: number): EstimateWithDetails;
   updateStatus(id: number, status: EstimateStatus, approvedAt?: string | null): EstimateWithDetails;
+}
+
+export interface VinDecoderProvider {
+  decode(vin: string): VinIdentification;
+}
+
+export interface MaintenanceScheduleProvider {
+  getSchedule(params: {
+    make: string;
+    model: string;
+    year?: number | null;
+    engine?: string | null;
+    mileage: number;
+  }): MaintenanceSchedule;
 }
 
 export interface PartsProvider {

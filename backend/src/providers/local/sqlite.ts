@@ -12,6 +12,7 @@ import type {
   EstimateWithDetails,
   HistoryVisit,
   Inspection,
+  InspectionItem,
   MaintenanceReminder,
   Part,
   Service,
@@ -104,10 +105,24 @@ export function createLocalProviders(database: Database.Database): Providers {
       .prepare('SELECT * FROM estimate_items WHERE estimate_id = ? ORDER BY id')
       .all(estimateId) as EstimateItem[];
 
+  const listInspectionItems = (inspectionId: number) =>
+    database
+      .prepare('SELECT * FROM inspection_items WHERE inspection_id = ? ORDER BY id')
+      .all(inspectionId) as InspectionItem[];
+
+  const hydrateInspection = (
+    row: Omit<Inspection, 'items'> | undefined,
+  ): Inspection | undefined => {
+    if (!row) return undefined;
+    return { ...row, items: listInspectionItems(row.id) };
+  };
+
   const getInspection = (appointmentId: number) =>
-    database.prepare('SELECT * FROM inspections WHERE appointment_id = ?').get(appointmentId) as
-      | Inspection
-      | undefined;
+    hydrateInspection(
+      database.prepare('SELECT * FROM inspections WHERE appointment_id = ?').get(appointmentId) as
+        | Omit<Inspection, 'items'>
+        | undefined,
+    );
 
   const hydrateEstimate = (row: Estimate | undefined): EstimateWithDetails | undefined => {
     if (!row) return undefined;
@@ -118,12 +133,11 @@ export function createLocalProviders(database: Database.Database): Providers {
     };
   };
 
-  const recalcEstimate = (estimateId: number): EstimateWithDetails => {
-    const total = (
-      database
-        .prepare('SELECT COALESCE(SUM(total_price), 0) AS total FROM estimate_items WHERE estimate_id = ?')
-        .get(estimateId) as { total: number }
-    ).total;
+  const recalcEstimate = (estimateId: number, approvedOnly = false): EstimateWithDetails => {
+    const sql = approvedOnly
+      ? 'SELECT COALESCE(SUM(total_price), 0) AS total FROM estimate_items WHERE estimate_id = ? AND approved = 1'
+      : 'SELECT COALESCE(SUM(total_price), 0) AS total FROM estimate_items WHERE estimate_id = ?';
+    const total = (database.prepare(sql).get(estimateId) as { total: number }).total;
     database
       .prepare("UPDATE estimates SET total_amount = ?, updated_at = datetime('now') WHERE id = ?")
       .run(total, estimateId);
@@ -784,6 +798,17 @@ export function createLocalProviders(database: Database.Database): Providers {
           .run(params.appointmentId, params.summary, params.notes ?? null);
         return getInspection(params.appointmentId)!;
       },
+      listInspectionItems,
+      addInspectionItem(params) {
+        const result = database
+          .prepare(
+            'INSERT INTO inspection_items (inspection_id, name, severity, note) VALUES (?, ?, ?, ?)',
+          )
+          .run(params.inspectionId, params.name, params.severity, params.note ?? null);
+        return database
+          .prepare('SELECT * FROM inspection_items WHERE id = ?')
+          .get(Number(result.lastInsertRowid)) as InspectionItem;
+      },
       getByAppointment(appointmentId) {
         const row = database
           .prepare('SELECT * FROM estimates WHERE appointment_id = ? ORDER BY id DESC LIMIT 1')
@@ -837,6 +862,15 @@ export function createLocalProviders(database: Database.Database): Providers {
         database.prepare('DELETE FROM estimate_items WHERE id = ?').run(itemId);
         recalcEstimate(item.estimate_id);
         return true;
+      },
+      setItemsApproved(estimateId, itemIds) {
+        const items = getEstimateItems(estimateId);
+        const selected = new Set(itemIds);
+        const update = database.prepare('UPDATE estimate_items SET approved = ? WHERE id = ?');
+        for (const item of items) {
+          update.run(selected.has(item.id) ? 1 : 0, item.id);
+        }
+        return recalcEstimate(estimateId, true);
       },
       recalcTotal: recalcEstimate,
       updateStatus(id, status, approvedAt) {

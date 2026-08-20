@@ -37,6 +37,27 @@ export function HomePage() {
   const vehicle = portal?.activeVehicle;
   const name = portal?.customer.name || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Гость';
 
+  async function bookService(preferTo = false) {
+    if (!vehicle) {
+      navigate('/vehicles/new');
+      return;
+    }
+    if (!preferTo) {
+      navigate('/booking/services');
+      return;
+    }
+    const servicesRes = await api.getServices();
+    const to =
+      servicesRes.data.find((item) => item.name === 'ТО') ??
+      servicesRes.data.find((item) => item.category === 'maintenance');
+    if (to) {
+      booking.setService(to);
+      navigate('/booking/specialist');
+      return;
+    }
+    navigate('/booking/services');
+  }
+
   async function onRepeat() {
     if (!portal?.lastVisit) return;
     const [contextRes, servicesRes, specialistsRes, vehiclesRes] = await Promise.all([
@@ -88,8 +109,14 @@ export function HomePage() {
             </div>
           </div>
           {portal?.reminder && <p className="hint">{portal.reminder.message}</p>}
-          <Link className="text-link" to="/vehicles">
-            Все автомобили
+          {portal?.maintenance?.nearestMilestone && (
+            <p className="hint">
+              Ближайшее ТО: {portal.maintenance.nearestMilestone.name} через{' '}
+              {formatMileage(portal.maintenance.nearestMilestone.remainingKm)}
+            </p>
+          )}
+          <Link className="text-link" to={`/vehicles/${vehicle.id}/next`}>
+            Регламент и автомобили
           </Link>
         </article>
       ) : (
@@ -106,10 +133,10 @@ export function HomePage() {
         <button
           type="button"
           className="btn btn-primary"
-          onClick={() => navigate('/booking/services')}
+          onClick={() => void bookService(false)}
           disabled={!vehicle}
         >
-          Записаться
+          Записаться в сервис
         </button>
         <button
           type="button"
@@ -118,9 +145,18 @@ export function HomePage() {
           onClick={() => navigate('/problem')}
           disabled={!vehicle}
         >
-          Что-то сломалось
+          Что случилось с автомобилем?
         </button>
       </div>
+      {vehicle && portal?.maintenance?.nearestMilestone && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-block"
+          onClick={() => void bookService(true)}
+        >
+          Записаться на ТО
+        </button>
+      )}
       <Link className="btn btn-ghost btn-block" to="/history">
         История обслуживания
       </Link>

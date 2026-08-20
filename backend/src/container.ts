@@ -3,8 +3,12 @@ import { db } from './db/schema.js';
 import { logger } from './logger.js';
 import { createCrmProviders } from './providers/crm/stub.js';
 import { createLocalProviders } from './providers/local/sqlite.js';
+import { createDemoMaintenanceScheduleProvider } from './providers/maintenance/demo.js';
+import { createExternalMaintenanceScheduleProvider } from './providers/maintenance/external.js';
 import { createExternalPartsProvider } from './providers/parts/external.js';
-import type { Providers } from './providers/types.js';
+import type { MaintenanceScheduleProvider, Providers, VinDecoderProvider } from './providers/types.js';
+import { createDemoVinDecoderProvider } from './providers/vin/demo.js';
+import { createExternalVinDecoderProvider } from './providers/vin/external.js';
 
 function composeProviders(): Providers {
   const data =
@@ -32,4 +36,24 @@ function composeProviders(): Providers {
   return data;
 }
 
+function composeVinDecoder(): VinDecoderProvider {
+  if (config.vinProvider === 'external') {
+    logger.warn('VIN_PROVIDER=external: OEM VIN decoder is not connected.');
+    return createExternalVinDecoderProvider();
+  }
+  logger.info('VIN_PROVIDER=demo: using demo VIN catalog, not an OEM database');
+  return createDemoVinDecoderProvider();
+}
+
+function composeMaintenanceSchedule(): MaintenanceScheduleProvider {
+  if (config.maintenanceProvider === 'external') {
+    logger.warn('MAINTENANCE_PROVIDER=external: OEM maintenance schedule is not connected.');
+    return createExternalMaintenanceScheduleProvider();
+  }
+  logger.info('MAINTENANCE_PROVIDER=demo: using demo maintenance rules, not OEM data');
+  return createDemoMaintenanceScheduleProvider();
+}
+
 export const providers: Providers = composeProviders();
+export const vinDecoder: VinDecoderProvider = composeVinDecoder();
+export const maintenanceSchedule: MaintenanceScheduleProvider = composeMaintenanceSchedule();
